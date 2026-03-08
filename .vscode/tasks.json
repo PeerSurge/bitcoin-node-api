@@ -9,51 +9,6 @@
 			"isBackground": false,
 			"problemMatcher": [],
 			"group": "test"
-		},
-		{
-			"label": "Run unit tests",
-			"type": "shell",
-			"command": "npx jest",
-			"args": [],
-			"isBackground": false,
-			"problemMatcher": [],
-			"group": "test"
-		},
-		{
-			"label": "Run unit tests",
-			"type": "shell",
-			"command": "npx jest",
-			"args": [],
-			"isBackground": false,
-			"problemMatcher": [],
-			"group": "test"
-		},
-		{
-			"label": "Run unit tests",
-			"type": "shell",
-			"command": "npx jest",
-			"args": [],
-			"isBackground": false,
-			"problemMatcher": [],
-			"group": "test"
-		},
-		{
-			"label": "Run unit tests",
-			"type": "shell",
-			"command": "npx jest",
-			"args": [],
-			"isBackground": false,
-			"problemMatcher": [],
-			"group": "test"
-		},
-		{
-			"label": "Run unit tests",
-			"type": "shell",
-			"command": "npx jest",
-			"args": [],
-			"isBackground": false,
-			"problemMatcher": [],
-			"group": "test"
 		}
 	]
 }

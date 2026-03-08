@@ -24,8 +24,9 @@ describe('bitcoin-node-api method normalization', () => {
     expect(res.body).toHaveProperty('result', 'ok');
   });
 
-  it('should block non-whitelisted method', async () => {
+  it('should block non-whitelisted method with 403', async () => {
     const res = await request(app).get('/notallowed/123');
+    expect(res.statusCode).toBe(403);
     expect(res.text).toMatch(/restricted/);
   });
 });

@@ -1,0 +1,54 @@
+
+const request = require('supertest');
+const bitcoinApi = require('../lib/api');
+
+describe('bitcoin-node-api method normalization', () => {
+
+  let app;
+  let lastCommand;
+  beforeEach(() => {
+    // Set up the API and override accesslist
+    bitcoinApi.setAccess('only', ['getblock']);
+    // Use setWalletDetails to inject the mock client that captures the command
+    bitcoinApi.setWalletDetails({ command: (cmd, cb) => { lastCommand = cmd; cb(null, [{ result: 'ok' }]); } });
+    app = bitcoinApi.app;
+    lastCommand = null;
+  });
+
+  it('should allow whitelisted method with path parameter and forward it to RPC', async () => {
+    let capturedCommand;
+    bitcoinApi.setWalletDetails({
+      command: (cmd, cb) => {
+        capturedCommand = cmd;
+        cb(null, [{ result: 'ok' }]);
+      }
+    });
+    const res = await request(app).get('/getblock/123');
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty('result', 'ok');
+    expect(capturedCommand[0].method).toBe('getblock');
+    expect(capturedCommand[0].parameters).toEqual([123]);
+  });
+
+  it('should forward path parameter as positional RPC parameter', async () => {
+    const res = await request(app).get('/getblock/123');
+    expect(res.statusCode).toBe(200);
+    expect(lastCommand).not.toBeNull();
+    expect(lastCommand[0].method).toBe('getblock');
+    expect(lastCommand[0].parameters).toContain(123);
+  });
+
+  it('should forward both path and query parameters in order', async () => {
+    const res = await request(app).get('/getblock/123?verbose=1');
+    expect(res.statusCode).toBe(200);
+    expect(lastCommand[0].method).toBe('getblock');
+    expect(lastCommand[0].parameters[0]).toBe(123);
+    expect(lastCommand[0].parameters[1]).toBe(1);
+  });
+
+  it('should block non-whitelisted method with 403', async () => {
+    const res = await request(app).get('/notallowed/123');
+    expect(res.statusCode).toBe(403);
+    expect(res.text).toMatch(/restricted/);
+  });
+});

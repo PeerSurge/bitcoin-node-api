@@ -1,0 +1,13 @@
+# Changelog
+
+## v0.1.3
+- Added parameter parsing for VerifyMessage.
+
+## v0.1.2
+- Updated dependencies, using bitcoin-core and express 4.x
+
+## v0.1.1
+- Small changes to sending json, added 'read-only' profile.
+
+## v0.1.0
+- First commit

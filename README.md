@@ -124,11 +124,27 @@ Returns data as from the JSON-RPC API:
 ```
 
 
-Parameters are sent via a query string:
+Parameters can be passed in two ways:
+
+**1. Path segments** — append positional parameters directly to the URL path (recommended for simple, single-value parameters):
+
+```
+http://localhost:3000/bitcoin/api/getblock/000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f
+```
+
+Numeric segments are automatically cast to numbers:
+
+```
+http://localhost:3000/bitcoin/api/getblockhash/100000
+```
+
+**2. Query string** — pass named parameters as query-string key/value pairs (required for methods with multiple or named parameters):
 
 ```
 http://localhost:3000/bitcoin/api/gettransaction?txid=d6c7e35ff9c9623208c22ee37a118ad523ae6c2d137d10053739cb03dbac62e0
 ```
+
+Both styles can be combined; path-segment parameters are forwarded first, followed by query-string parameters, in the order they appear.
 
 ```json
 {

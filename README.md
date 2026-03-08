@@ -1,64 +1,109 @@
+
 # bitcoin-node-api
 
-Bitcoin-Node-Api is an Express middleware plugin that easily exposes a URL structure for interfacing with a bitcoind Bitcoin wallet.
+![npm](https://img.shields.io/npm/v/bitcoin-node-api)
+![npm downloads](https://img.shields.io/npm/dm/bitcoin-node-api)
+![GitHub](https://img.shields.io/github/license/uaktags/Bitcoin-Node-Api)
 
-NB: The middleware is experimental at present. Certain JSON-RPC methods are not supported yet and/or experimental. These are methods with more complex parameters that do not fit easily into a query string:
+Bitcoin-Node-Api is an Express middleware plugin that exposes a URL structure for interfacing with a bitcoind Bitcoin wallet.
 
-- addmultisigaddress
-- createmultisig
-- createrawtransaction
-- getaddednodeinfo
-- lockunspent
-- sendmany
-- signrawtransaction
-- submitblock
+> **Note:** This middleware is experimental. Some JSON-RPC methods with complex parameters are not yet supported:
+> - addmultisigaddress
+> - createmultisig
+> - createrawtransaction
+> - getaddednodeinfo
+> - lockunspent
+> - sendmany
+> - signrawtransaction
+> - submitblock
 
-These methods will be added in the future. If there any other problems with the other methods, please report the bugs.
+These methods will be added in the future. Please report any issues with other methods.
+
+---
+
+## Table of Contents
+
+- [Features](#features)
+- [Install](#install)
+- [How to use](#how-to-use)
+- [API Examples](#api-examples)
+- [Access Control](#access-control)
+- [Projects Using bitcoin-node-api](#projects-using-bitcoin-node-api)
+- [Changelog](#changelog)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Features
+
+- Simple Express middleware for Bitcoin Core JSON-RPC
+- Easy URL-based access to wallet methods
+- Access control profiles (default-safe, read-only, custom)
+- Supports modern Node.js and Express
+
+---
+
 
 ## Install
 
-```javascript
+```sh
 npm install bitcoin-node-api
 ```
 
+
 ## How to use
 
-### Node.js
+### Node.js Example
 
-```javascript
-var bitcoinapi = require('bitcoin-node-api');
-var express = require('express');
-var app = express();
+```js
+const bitcoinapi = require('bitcoin-node-api');
+const express = require('express');
+const app = express();
 
-//Username and password relate to those set in the bitcoin.conf file
-
-var wallet = {
+// Username and password relate to those set in the bitcoin.conf file
+const wallet = {
   host: 'localhost',
   port: 8332,
   user: 'username',
-  pass: 'password'
+  pass: 'password',
 };
 
 bitcoinapi.setWalletDetails(wallet);
-bitcoinapi.setAccess('default-safe'); //Access control
-app.use('/bitcoin/api', bitcoinapi.app); //Bind the middleware to any chosen url
+bitcoinapi.setAccess('default-safe'); // Access control
+app.use('/bitcoin/api', bitcoinapi.app); // Bind the middleware to any chosen url
 
-app.listen(3000);
+app.listen(3000, () => {
+  console.log('Server running on port 3000');
+});
 ```
 
-### Client/Browser
+#### Example .env (recommended)
 
-Just add the method name after the binded url.
+```
+BITCOIN_HOST=localhost
+BITCOIN_PORT=8332
+BITCOIN_USER=username
+BITCOIN_PASS=password
+```
 
-* http://localhost:5000/URL/METHOD
+> ⚠️ **Security tip:** Never commit real credentials to version control. Use environment variables or a config file excluded by .gitignore.
 
-For example:
 
-* http://localhost:5000/bitcoin/api/getinfo
+---
 
-This returns data exactly as would be expected from the JSON-RPC api.
+## API Examples
 
-```javascript
+Just add the method name after the bound URL:
+
+```
+http://localhost:3000/bitcoin/api/getinfo
+```
+
+Returns data as from the JSON-RPC API:
+
+
+```json
 {
   "version": 80300,
   "protocolversion": 70001,
@@ -78,11 +123,14 @@ This returns data exactly as would be expected from the JSON-RPC api.
 }
 ```
 
+
 Parameters are sent via a query string:
 
-* http://localhost:3000/bitcoin/api/gettransaction?txid=d6c7e35ff9c9623208c22ee37a118ad523ae6c2d137d10053739cb03dbac62e0
+```
+http://localhost:3000/bitcoin/api/gettransaction?txid=d6c7e35ff9c9623208c22ee37a118ad523ae6c2d137d10053739cb03dbac62e0
+```
 
-```javascript
+```json
 {
   "amount": 0.002,
   "confirmations": 1321,
@@ -103,75 +151,89 @@ Parameters are sent via a query string:
 }
 ```
 
-Consult the [API call list](https://en.bitcoin.it/wiki/Original_Bitcoin_client/API_Calls_list) for parameter information.
 
+Consult the [Bitcoin Core API call list](https://en.bitcoin.it/wiki/Original_Bitcoin_client/API_Calls_list) for parameter information.
+
+
+
+---
 
 ## Access Control
 
-### .setWalletPassphrase(passphrase);
+### .setWalletPassphrase(passphrase)
 
-If you have encrypted your wallet.dat you need to set the passphrase before attaching the middleware.
-```javascript
+If you have encrypted your wallet.dat, set the passphrase before attaching the middleware:
+
+```js
 bitcoinapi.setWalletDetails(wallet);
 bitcoinapi.setWalletPassphrase(passphrase);
 app.use('/bitcoin/api', bitcoinapi.app);
 ```
 
-### .setAccces(type, accesslist);
+### .setAccess(type, accesslist)
 
-The .setAccess method controls the access to the urls. By default all commands are accessible. The method takes two parameters: type (string) and accesslist (array). To restrict access there are two ways to do this:
+The `.setAccess` method controls access to the URLs. By default, all commands are accessible. Restrict access in two ways:
 
 #### 'only'
 
-The 'only' type only exposes the methods given by an array of methods as the accesslist parameter.
+Expose only the methods listed:
 
-```javascript
-//Only allow the getinfo method
+```js
+// Only allow the getinfo method
 bitcoinapi.setAccess('only', ['getinfo']);
 ```
 
 #### 'restrict'
 
-The 'restrict' type prevents methods from being accessed.
+Prevent access to specific methods:
 
-```javascript
+```js
 bitcoinapi.setAccess('restrict', ['dumpprivkey', 'sendmany']);
 ```
 
 ### Access Profiles
 
-Bitcoin-Node-Api has predefined access profiles to make it easy to set up.
+Predefined access profiles make setup easy:
 
 #### 'default-safe'
 
-It prevents 'dumpprivkey' and 'walletpassphrasechange' being accessed. This prevents potential theft. Also removes the 'stop' command to prevent someone from stopping the server.
+Prevents 'dumpprivkey', 'walletpassphrasechange', and 'stop' commands:
 
-```javascript
+```js
 bitcoinapi.setAccess('default-safe');
 ```
 
 #### 'read-only'
 
-This profile only exposes methods that show information. No methods that can send/alter the wallet are exposed.
+Only exposes methods that show information (no send/alter wallet methods):
 
-```javascript
+```js
 bitcoinapi.setAccess('read-only');
 ```
 
-## Projects
 
-Bitcoin-Node-Api is used in the following projects:
+---
 
-* [Min.io](http://min.io)
+## Projects Using bitcoin-node-api
 
-If you use Bitcoin-Node-Api in your projects submit a pull request to the readme with a link or send me an email: niel@delarouviere.com
+If you use bitcoin-node-api in your project, submit a pull request to add your link here or email niel@delarouviere.com.
 
-# Licence
 
-Copyright (C) 2013 Niel de la Rouviere
+---
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+## Changelog
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+See [changelog.md](changelog.md) for release history.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+---
+
+## Contributing
+
+Contributions are welcome! Please open issues or pull requests. For major changes, open an issue first to discuss what you would like to change.
+
+---
+
+## License
+
+
+MIT © 2013 Niel de la Rouviere

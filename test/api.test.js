@@ -15,15 +15,19 @@ describe('bitcoin-node-api method normalization', () => {
     lastCommand = null;
   });
 
-  it('should allow whitelisted method with parameter', async () => {
+  it('should allow whitelisted method with path parameter and forward it to RPC', async () => {
+    let capturedCommand;
+    bitcoinApi.setWalletDetails({
+      command: (cmd, cb) => {
+        capturedCommand = cmd;
+        cb(null, [{ result: 'ok' }]);
+      }
+    });
     const res = await request(app).get('/getblock/123');
-    if (res.statusCode !== 200) {
-      console.log('Response status:', res.statusCode);
-      console.log('Response body:', res.body);
-      console.log('Response text:', res.text);
-    }
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty('result', 'ok');
+    expect(capturedCommand[0].method).toBe('getblock');
+    expect(capturedCommand[0].parameters).toEqual([123]);
   });
 
   it('should forward path parameter as positional RPC parameter', async () => {
